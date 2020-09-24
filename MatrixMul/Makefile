@@ -9,6 +9,9 @@ CFLAGS=-O3 -march=native
 MKL_LIB=${MKL_DIR}/lib/intel64
 MKL_INC=${MKL_DIR}/include
 
+OPENBLAS_LIB=${OPENBLAS_DIR}/lib/
+OPENBLAS_INC=${OPENBLAS_DIR}/include/
+
 MKL_SEQ=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 MKL_OMP=-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread 
 
@@ -33,6 +36,7 @@ usage:
 	@echo "    make mkl_gemm_fp64_monothread"
 	@echo "    build single precision (fp32) CPU bencharmk singlethread) :"
 	@echo "    make mkl_gemm_fp32_monothread"
+	@echo "    make openblas_gemm_fp32_monothread"
 	@echo "    build double precision (fp64) CPU bencharmk multithreads) :"
 	@echo "    make mkl_gemm_fp64_multithread"
 	@echo "    build single precision (fp32) CPU bencharmk multithreads) :"
@@ -61,7 +65,13 @@ mkl_gemm_fp32_monothread:
 	
 atlas_gemm_fp32_monothread:
 	${CC} -fopenmp $(CFLAGS) -o ./bin/atlas_gemm_fp32_monothread.x ./src/cgemm_ATLAS.c -I${ATLAS_INC} -L${ATLAS_LIB} -lcblas -latlas  $(LIB_STD)	
-	
+
+openblas_gemm_fp32:
+	${CC} -fopenmp $(CFLAGS) -o ./bin/openblas_gemm_fp32.x ./src/cgemm_OPENBLAS.c -I${OPENBLAS_INC} -L${OPENBLAS_LIB} -lopenblas  -lpthread $(LIB_STD)
+
+openblas_gemm_fp64:
+	${CC} -fopenmp $(CFLAGS) -o ./bin/openblas_gemm_fp64.x ./src/zgemm_OPENBLAS.c -I${OPENBLAS_INC} -L${OPENBLAS_LIB} -lopenblas  -lpthread $(LIB_STD)
+
 clean:
-	rm -f *.x *.exe
+	rm -f *.x *.exe bin/*.x
 
