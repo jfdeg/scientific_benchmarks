@@ -16,28 +16,61 @@ typedef openblas_complex_double MKL_Complex16;
 int main(void) 
 {
 
-  int     M, N;
+  int     val;
+  int 	  M, N, K;
+  int 	  lda, ldb, ldc;
   int     kboucle;
   float   charge;
-
+  char    *p;
+  
   FILE *fichier1;
-  fichier1 = fopen("../results/results_openblas_gemm_fp32.dat", "w");
+  fichier1 = fopen("../results/results_openblas_gemm_fp64.dat", "w");
 
-  /* Debut grand boucle */
+  int has_param_m = 0, has_param_n = 0, has_param_k = 0;
+  char transa = CblasNoTrans, transb = CblasNoTrans;
+  
+  if ((p = getenv("MATMUL_M"))) {
+    M = atoi(p);
+    has_param_m=1;
+  }
+  if ((p = getenv("MATMUL_N"))) {
+    N = atoi(p);
+    has_param_n=1;
+  } 
+  if ((p = getenv("MATMUL_K"))) {
+    K = atoi(p);
+    has_param_k=1;
+  }
+  
+  if ((p = getenv("TRANSA"))) {
+    if(*p == 'T')
+		transa = CblasTrans;
+  }
+  if ((p = getenv("TRANSB"))) {
+    if(*p == 'T')
+		transb = CblasTrans;
+  }
 
+  /* Begin huge loop */
   for (kboucle = 1; kboucle < 31; kboucle++) {
 
-    M = 100 * kboucle;
-    N = M;
-
-    printf(">>>>> Matrix size %dx%d  <<<<<<\n", M, N);
+    val = 100 * kboucle;
+    M = has_param_m?M:val;
+    N = has_param_n?N:val;
+	K = has_param_k?K:val;
+	
+	lda = (transa == CblasNoTrans)?M:K;
+    ldb = (transb == CblasNoTrans)?K:N;
+    ldc = M;
+	
+    printf(">>>>> Matrix size %dx%d (K=%d, TransA=%d TransB=%d) <<<<<<\n", M, N, K,\
+		transa - CblasNoTrans, transb - CblasNoTrans);
 
     int    iboucle, jboucle;
     int    param = 20;
     float *mat_real, *mat_imag;
 
-    // Chronometre
-
+    // Timers
     struct timespec tpdeb, tpfin, tpcour;
     clockid_t clock_id = CLOCK_REALTIME;
     int status2;
@@ -46,47 +79,37 @@ int main(void)
     dureetot = 0.0;
 
     // BLAS
-
-    char transa, transb;
-    MKL_INT dim;
-    MKL_INT lda;
     MKL_Complex16 alpha, beta;
     MKL_Complex16 *A, *B, *C;
-
-    transa = CblasNoTrans;
-    transb = CblasNoTrans;
 
     alpha.real = 1.0;
     alpha.imag = 0.0;
     beta.real  = 0.0;
     beta.imag  = 0.0;
 
-    dim = M;
+    mat_real = (float *)aligned_alloc(AVX512_ALIGN, val * val * sizeof(float));
+    mat_imag = (float *)aligned_alloc(AVX512_ALIGN, val * val * sizeof(float));
 
-    mat_real = (float *)aligned_alloc(AVX512_ALIGN, M * N * sizeof(float));
-    mat_imag = (float *)aligned_alloc(AVX512_ALIGN, M * N * sizeof(float));
-
-    A = (MKL_Complex16 *)aligned_alloc(AVX512_ALIGN, M * N * sizeof(MKL_Complex16));
-    B = (MKL_Complex16 *)aligned_alloc(AVX512_ALIGN, M * N * sizeof(MKL_Complex16));
+    A = (MKL_Complex16 *)aligned_alloc(AVX512_ALIGN, M * K * sizeof(MKL_Complex16));
+    B = (MKL_Complex16 *)aligned_alloc(AVX512_ALIGN, K * N * sizeof(MKL_Complex16));
     C = (MKL_Complex16 *)aligned_alloc(AVX512_ALIGN, M * N * sizeof(MKL_Complex16));
 
-    for (iboucle = 0; iboucle < M * N; iboucle++) {
+    for (iboucle = 0; iboucle < val * val; iboucle++) {
       gene_bruit_rayleigh_scalaire(param, mat_real + iboucle,
                                    mat_imag + iboucle);
     }
 
     // Force hermitian matrix
-
-    for (iboucle = 0; iboucle < N; iboucle++) {
+    for (iboucle = 0; iboucle < K; iboucle++) {
       for (jboucle = 0; jboucle < N; jboucle++) {
-        B[(iboucle * N) + jboucle].real = (double)(*(mat_real + (jboucle * N) + iboucle));
+        B[(iboucle * N) + jboucle].real = (double)(*(mat_real + (jboucle * K) + iboucle));
 
         B[(iboucle * N) + jboucle].imag =
-            -1.0 * (double)(*(mat_imag + (jboucle * N) + iboucle));
+            -1.0 * (double)(*(mat_imag + (jboucle * K) + iboucle));
       }
     }
 
-    for (iboucle = 0; iboucle < N * N; iboucle++) {
+    for (iboucle = 0; iboucle < M * K; iboucle++) {
       A[iboucle].real = (double)mat_real[iboucle];
       A[iboucle].imag = (double)mat_imag[iboucle];
     }
@@ -94,9 +117,9 @@ int main(void)
     status2 = clock_gettime(clock_id, &tpdeb); // start timer;
 
     cblas_zgemm(CblasColMajor, transa, transb, \
-        dim, dim, dim, \
-        &alpha, A, dim, \
-        B, dim, &beta, C, dim);
+        M, N, K, \
+        &alpha, A, lda, \
+        B, ldb, &beta, C, ldc);
 
     status2 = clock_gettime(clock_id, &tpfin); // stop timer
 
