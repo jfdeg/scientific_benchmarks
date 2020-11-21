@@ -25,19 +25,29 @@
 #endif
 
 
-extern int mklEstimation_Complex_sp(MKL_Complex8 *signal_out, MKL_Complex8 *signal_in, int nbCD, int nbRV, int nbR, int nbV, int nbREF, int nbREC, int nbFFT);
-extern void estimation_alloc_once_sp(int nbRV, int nbR, int nbV, int nbREF);
-extern void estimation_free_once_sp(void);
-
+extern int mklEstimation_Complex_sp(MKL_Complex8 *signal_out, MKL_Complex8 *signal_in, int N, int M, int nbMat, char transN, char transC, MKL_Complex8 norm, MKL_Complex8 null);
 static void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, size_t size_ref);
 
-void AutoBenchEstimation_MKL_sp() {
+void AutoBenchEstimation_MKL_sp(int nbRUN) {
 
+    /* declarations */
+    size_t size_mat,size_sig,size_ref;
+    float total,min_time,max_time,elapsedTime,nb_operation;
+	struct timespec tpdeb;
+	struct timespec tpfin;
+	clockid_t clock_id = CLOCK_REALTIME;
+    char transN, transC;
+    MKL_Complex8 norm,null,diff;
+	float error,sum;
+    
+
+    /* Loop on matrix size */
     for(int N = 100 ; i <= 3000 ; i = i + 100) {
 
 	/** Data init **/
-	size_t size_sig = (size_t) (N*N*nbRUN);
-	size_t size_ref = (size_t) (N*N*nbRUN);
+    size_mat = (size_t) (N*N);
+	size_sig = (size_t) (size_mat*nbRUN);
+	size_ref = (size_t) (size_mat*nbRUN);
 
 	MKL_Complex8 *signal_in = (MKL_Complex8*) MALLOC(size_sig*sizeof(MKL_Complex8));
 	if(signal_in == NULL) {
@@ -55,18 +65,15 @@ void AutoBenchEstimation_MKL_sp() {
 	}
 
 	readData(signal_in, size_sig, reference, size_ref);
+
 	/*************************************************************************************************************************/
 
-	/* Mise en place du bench MKL ********************************************************************************************/
-	float total = 0.0f;
-	float min_time = 65536.0f;
-	float max_time = 0.0f;
-	float elapsedTime  = 0.0f;
-	float nb_operation = (float) (1e-9*N*N*8.0f);
-
-	struct timespec tpdeb;
-	struct timespec tpfin;
-	clockid_t clock_id = CLOCK_REALTIME;
+	/* Timing tools  ********************************************************************************************/
+	total = 0.0f;
+	min_time = 65536.0f;
+	max_time = 0.0f;
+	elapsedTime  = 0.0f;
+	nb_operation = (float) (1e-9*N*N*8.0f);
 
 	FILE *fid = fopen("MatrixMul_MKL_sp.txt", "w+");
 	if(fid == NULL) {
@@ -74,17 +81,28 @@ void AutoBenchEstimation_MKL_sp() {
 		return;
 	}
 
+    /* gemm parameters */
+
+	transN = 'N';
+	transC = 'C';
+
+	norm.real = 1.0f/(float) N;
+	norm.imag = 0.0f;
+
+	null.real = 0.0f;
+	null.imag = 0.0f;
+
 	// Warmup
 	memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
-	mklEstimation_STAP_sp(signal_out, signal_in, N);
+	mklEstimation_Complex_sp(signal_out, signal_in, N, N, 1, transN, transC, norm, null);
 
 
-	for(int i = 0 ; i < nb_fois ; i++) {
+	for(int i = 0 ; i < nbRUN ; i++) {
 		memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
 
 		clock_gettime(clock_id, &tpdeb);
 
-		mklMatrixMul_sp(signal_out, signal_in, N);
+		mklEstimation_Complex_sp(signal_out, signal_in, N, N, 1, transN, transC, norm, null);
 
 		clock_gettime(clock_id, &tpfin);
 
@@ -101,10 +119,10 @@ void AutoBenchEstimation_MKL_sp() {
 
 	/*************************************************************************************************************************/
 
-	/* Comparaison des resultats MKL *****************************************************************************************/
-	MKL_Complex8 diff;
-	float error = 0.0f;
-	float sum   = 0.0f;
+	/* Results comparison with MATLAB  *****************************************************************************************/
+
+	error = 0.0f;
+	sum   = 0.0f;
 
 	for(int i = 0 ; i < nbCD ; i++) {
 		for(int j = 0 ; j < nbRV ; j++) {
@@ -146,15 +164,9 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
 		fprintf(stderr, "Error at %s:%d : %s\n", __FILE__, __LINE__, strerror(errno));
 	}
 
-	char *home = getenv("STAP_DATA_PATH");
-	char path[150];
-	char *type_fo = getenv("TYPE_FO");
-	char path2[20];
+    // a mettre a jour .....
 
-	strcpy(path, home);
-	strcpy(path2, type_fo);
-	strcat(path, path2);
-	strcat(path, "/estimation.bin");
+	char path = "../data/CovMatEstimation/CME_Complex_out_XXX.bin");
 
 	FILE *fid = fopen(path, "rb");
 	if(fid == NULL) {
@@ -179,10 +191,7 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
 		fprintf(stderr, "Error at %s:%d : %s\n", __FILE__, __LINE__, strerror(errno));
 	}
 
-	strcpy(path, home);
-	strcpy(path2, type_fo);
-	strcat(path, path2);
-	strcat(path, "/reformation.bin");
+	path = "../data/CovMatEstimation/CME_Complex_in_XXX.bin");
 
 	fid = fopen(path, "rb");
 	if(fid == NULL) {
