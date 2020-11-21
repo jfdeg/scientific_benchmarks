@@ -20,7 +20,7 @@ CARMA_LIB=/usr/local/cudarm4/cuda/lib
 CUDA_LIB = -lcublas -lcudart 
 CUDA_INCLUDE =/usr/local/cuda/include
 # you have to specify the compute capability of your GPU
-CUDA_ARCH = -arch=sm_20
+CUDA_ARCH = -arch=sm_61
 
 # Other libraries
 LIB_STD=-lrt -lm
