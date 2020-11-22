@@ -16,7 +16,7 @@
 #define ADDCSV printf
 #endif
 
-extern void benchCovMatEstimation_MKL_dp();
+// extern void benchCovMatEstimation_MKL_dp();
 extern void benchCovMatEstimation_MKL_sp();
 
 #ifdef CL
@@ -30,18 +30,19 @@ extern void benchCovMatEstimation_CUDA_sp();
 
 int main(int argc, char **argv) {
 
+    int nbRUN = 5;
 
-	PRINTF("\n\n");
-	PRINTF("====================\t CovMatEstimation (x%d)\t ====================\n\n", nb_fois);
+	//PRINTF("\n\n");
+	//PRINTF("====================\t CovMatEstimation (x%d)\t ====================\n\n", nb_fois);
 
-	PRINTF("Starting MKL Double Precision...\n\n");
-	ADDCSV("CovMatEstimation;MKL_DP;FO;%d;",type_fo);
-	AutoBenchEstimation_MKL_dp();
-	PRINTF("\n\n");
+	//PRINTF("Starting MKL Double Precision...\n\n");
+	//ADDCSV("CovMatEstimation;MKL_DP;FO;%d;",type_fo);
+	//AutoBenchEstimation_MKL_dp();
+	//PRINTF("\n\n");
 
 	PRINTF("Starting MKL Simple Precision...\n\n");
-	ADDCSV("CovMatEstimation;MKL_SP;FO;%d;",type_fo);
-	AutoBenchEstimation_MKL_sp();
+	//ADDCSV("CovMatEstimation;MKL_SP;FO;%d;",type_fo);
+	AutoBenchEstimation_MKL_sp(nbRUN);
 	PRINTF("\n\n");
 
 #ifdef CUDA

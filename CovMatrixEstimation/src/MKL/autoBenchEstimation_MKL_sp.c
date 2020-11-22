@@ -24,6 +24,19 @@
 #include <mkl.h>
 #endif
 
+#ifndef USE_MKL_MALLOC
+	#define MALLOC(a) malloc(a)
+	#define FREE(a) free(a)
+#else
+	#ifdef OPEN
+		#define MALLOC(a) malloc(a) //aligned_alloc(a,64)
+		#define FREE(a)   free(a)
+	#else
+		#define MALLOC(a) mkl_malloc(a,64)
+		#define FREE(a) mkl_free(a)
+	#endif
+#endif
+
 
 extern int mklEstimation_Complex_sp(MKL_Complex8 *signal_out, MKL_Complex8 *signal_in, int N, int M, int nbMat, char transN, char transC, MKL_Complex8 norm, MKL_Complex8 null);
 static void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, size_t size_ref);
@@ -42,7 +55,7 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
     
 
     /* Loop on matrix size */
-    for(int N = 100 ; i <= 3000 ; i = i + 100) {
+    for(int N = 100 ; N <= 100 ; N = N + 100) {
 
 	/** Data init **/
     size_mat = (size_t) (N*N);
@@ -95,14 +108,14 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	// Warmup
 	memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
 	mklEstimation_Complex_sp(signal_out, signal_in, N, N, 1, transN, transC, norm, null);
-
+    memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
 
 	for(int i = 0 ; i < nbRUN ; i++) {
-		memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
+		//memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
 
 		clock_gettime(clock_id, &tpdeb);
 
-		mklEstimation_Complex_sp(signal_out, signal_in, N, N, 1, transN, transC, norm, null);
+		mklEstimation_Complex_sp(signal_out+i*size_mat, signal_in+i*size_mat, N, N, 1, transN, transC, norm, null);
 
 		clock_gettime(clock_id, &tpfin);
 
@@ -124,12 +137,12 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	error = 0.0f;
 	sum   = 0.0f;
 
-	for(int i = 0 ; i < nbCD ; i++) {
-		for(int j = 0 ; j < nbRV ; j++) {
-			for(int k = 0 ; k < nbRV ; k++) {
+	for(int i = 0 ; i < nbRUN ; i++) {
+		for(int j = 0 ; j < N ; j++) {
+			for(int k = 0 ; k < N ; k++) {
 				if(j >= k) {
-					MKL_Complex8 *ref = (MKL_Complex8*) reference+k+(j+i*nbRV)*nbRV;
-					MKL_Complex8 *sig = (MKL_Complex8*) signal_out+k+(j+i*nbRV)*nbRV;
+					MKL_Complex8 *ref = (MKL_Complex8*) reference+k+(j+i*N)*N;
+					MKL_Complex8 *sig = (MKL_Complex8*) signal_out+k+(j+i*N)*N;
 					diff.real  = ref->real - sig->real;
 					diff.imag  = ref->imag - sig->imag;
 					error += sqrtf(diff.real * diff.real + diff.imag * diff.imag);
@@ -140,13 +153,13 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	}
 
 	PRINTF("*************\tTotal MKL Simple Precision\t*************\n");
-	PRINTF("Average elapsed time\t= %lf ms\n", (total/nb_fois)*1000);
+	PRINTF("Average elapsed time\t= %lf ms\n", (total/nbRUN)*1000);
 	PRINTF("Min time \t= %lf ms\n", min_time*1000);
 	PRINTF("Max time \t= %lf ms\n", max_time*1000);
 	PRINTF("Nb operation\t= %g Gflop\n", nb_operation);
-	PRINTF("Performance\t= %g Gflop/s\n", nb_operation/(total/nb_fois));
+	PRINTF("Performance\t= %g Gflop/s\n", nb_operation/(total/nbRUN));
 	PRINTF("Error\t\t= %g\n", error/sum);
-	ADDCSV("AVG;%g;GFLOPS;%g;ERROR;%g\n",(total/nb_fois)*1000,nb_operation/(total/nb_fois),error/sum);
+	//ADDCSV("AVG;%g;GFLOPS;%g;ERROR;%g\n",(total/nbRUN)*1000,nb_operation/(total/nbRUN),error/sum);
 
 	/*************************************************************************************************************************/
 
@@ -166,7 +179,7 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
 
     // a mettre a jour .....
 
-	char path = "../data/CovMatEstimation/CME_Complex_out_XXX.bin");
+	char *path = "../data/CovMatEstimation/CME_Complex_out_300.bin";
 
 	FILE *fid = fopen(path, "rb");
 	if(fid == NULL) {
@@ -191,7 +204,7 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
 		fprintf(stderr, "Error at %s:%d : %s\n", __FILE__, __LINE__, strerror(errno));
 	}
 
-	path = "../data/CovMatEstimation/CME_Complex_in_XXX.bin");
+	path = "../data/CovMatEstimation/CME_Complex_in_300.bin";
 
 	fid = fopen(path, "rb");
 	if(fid == NULL) {

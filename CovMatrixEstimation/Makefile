@@ -15,8 +15,8 @@ OPEN ?= 0
 NV_ARCH=-gencode arch=compute_70,code=sm_70 # TITAN V => 7.0
 
 # Listes des fichiers .c et .o pour MKL double precision
-SRC_C_DP = $(wildcard src/MKL/*_dp.c)
-OBJ_C_DP = $(subst src, obj, $(SRC_C_DP:.c=.o))
+#SRC_C_DP = $(wildcard src/MKL/*_dp.c)
+#OBJ_C_DP = $(subst src, obj, $(SRC_C_DP:.c=.o))
 
 # Listes des fichiers .c et .o pour MKL simple precision
 SRC_C_SP = $(wildcard src/MKL/*_sp.c )
@@ -82,23 +82,21 @@ endif
 # Variables associées à MEX
 MEX_FLAGS = -fPIC -shared
 
-all : benchEstimation_STAP
+all : benchCovMatEstimation_MKL
 
-run : benchEstimation_STAP
-	./benchEstimation_STAP.out
+run : benchCovMatEstimation_MKL
+	./benchCovMatEstimation_MKL.out
 
 
-benchEstimation_STAP : $(OBJ_C_SP) $(OBJ_C_DP) $(OBJ_CUDA_SP) $(OBJ_CUDA_DP) obj/main.o
+benchCovMatEstimation : $(OBJ_C_SP) $(OBJ_C_DP) $(OBJ_CUDA_SP) $(OBJ_CUDA_DP) obj/main.o
 ifeq ($(CUDA),1)
 	nvcc -m64 $(NV_ARCH) --compiler-options "\$(CUDA_FLAGS) \$(MEX_FLAGS)" --device-link $(OBJ_CUDA_SP) $(OBJ_CUDA_DP) -o $(CUDA_BENCH_OBJ)
 endif
 	$(CC) -o $@.out $+ $(CUDA_BENCH_OBJ) $(MKL_FLAGS) $(MKL_LIBRARY) $(CUDA_FLAGS) $(CUDA_LIBRARY) $(CL_LIBRARY)
 	
-	cp $@.out ../bin/.
 
-benchDecomposition_STAP_mkl : $(OBJ_C_SP) $(OBJ_C_DP) obj/main.o
+benchCovMatEstimation_MKL : $(OBJ_C_SP) $(OBJ_C_DP) obj/main.o
 	$(CC) -o $@.out $+ $(MKL_FLAGS) $(MKL_LIBRARY) 
-	cp $@.out ../bin/.
 
 ifeq ($(CUDA),1)
 obj/%_dp.o : src/%_dp.cu
@@ -108,8 +106,8 @@ obj/%_sp.o : src/%_sp.cu
 	nvcc -ccbin=cuda-gcc -m64 $(NV_ARCH) -use_fast_math --compiler-options "\$(CUDA_FLAGS) \$(MEX_FLAGS)" $(CUDA_INCLUDE) --device-c $< -o $@
 endif 
 
-obj/%_dp.o : src/%_dp.c
-	$(CC) -o $@ -c $^ $(CFLAGS) $(MKL_FLAGS) $(MKL_INCLUDE)
+#obj/%_dp.o : src/%_dp.c
+#	$(CC) -o $@ -c $^ $(CFLAGS) $(MKL_FLAGS) $(MKL_INCLUDE)
 
 obj/%_sp.o : src/%_sp.c
 	$(CC) -o $@ -c $^ $(CFLAGS) $(MKL_FLAGS) $(MKL_INCLUDE)
