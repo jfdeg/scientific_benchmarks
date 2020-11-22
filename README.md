@@ -11,7 +11,7 @@ GPU code either uses CUDA libs (only works with Nvidia GPUs) or OpenCL
 
 List of available benchmarks :
 
-* MatrixMul : computes a complex matrix-matrix multiplication using the gemm function.
+* CovarianceMatrixEstimation : computes the covariance matrix of N vectors of size N using a matrix-matrix multiplication (gemm)
 	
 	
 ## Setup

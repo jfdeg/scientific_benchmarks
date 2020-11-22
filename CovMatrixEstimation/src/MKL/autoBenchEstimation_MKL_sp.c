@@ -78,6 +78,7 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	}
 
 	readData(signal_in, size_sig, reference, size_ref);
+    printf("signal_in[0] = %f,signal_in[1] = %f\n");
 
 	/*************************************************************************************************************************/
 
@@ -95,13 +96,10 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	}
 
     /* gemm parameters */
-
 	transN = 'N';
 	transC = 'C';
-
 	norm.real = 1.0f/(float) N;
 	norm.imag = 0.0f;
-
 	null.real = 0.0f;
 	null.imag = 0.0f;
 
@@ -179,7 +177,11 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
 
     // a mettre a jour .....
 
-	char *path = "../data/CovMatEstimation/CME_Complex_out_300.bin";
+    char path[150];
+    char *home = "/home/jfd/projets/scientific_benchmarks/data/CovMatEstimation/";
+
+	strcpy(path, home);
+	strcat(path, "CME_Complex_out_100.bin");
 
 	FILE *fid = fopen(path, "rb");
 	if(fid == NULL) {
@@ -204,7 +206,8 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
 		fprintf(stderr, "Error at %s:%d : %s\n", __FILE__, __LINE__, strerror(errno));
 	}
 
-	path = "../data/CovMatEstimation/CME_Complex_in_300.bin";
+	strcpy(path, home);
+	strcat(path, "CME_Complex_in_100.bin");
 
 	fid = fopen(path, "rb");
 	if(fid == NULL) {
