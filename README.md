@@ -15,6 +15,8 @@ List of available benchmarks :
 	
 	
 ## Setup
+First, you have to generate the data required by the benchmarks by using the data_generation MATLAB script located in the data folder (Python version will come later). 
+
 To run the benchmarks, please read the README included in each foler.
 
 

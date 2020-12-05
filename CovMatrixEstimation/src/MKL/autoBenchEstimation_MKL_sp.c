@@ -78,7 +78,6 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	}
 
 	readData(signal_in, size_sig, reference, size_ref);
-    printf("signal_in[0] = %f,signal_in[1] = %f\n");
 
 	/*************************************************************************************************************************/
 
@@ -106,7 +105,7 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	// Warmup
 	memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
 	mklEstimation_Complex_sp(signal_out, signal_in, N, N, 1, transN, transC, norm, null);
-    memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
+    	memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
 
 	for(int i = 0 ; i < nbRUN ; i++) {
 		//memset(signal_out, 0, size_ref*sizeof(MKL_Complex8));
@@ -125,8 +124,6 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	}
 
 	fclose(fid);
-
-
 
 	/*************************************************************************************************************************/
 

@@ -1,5 +1,5 @@
 
-write = 1;
+write = 0;
 
 %% Covariance Matrix Estimation benchmark %%
 disp('Covariance Matrix Estimation generation');
