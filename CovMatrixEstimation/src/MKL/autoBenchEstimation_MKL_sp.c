@@ -88,7 +88,7 @@ void AutoBenchEstimation_MKL_sp(int nbRUN) {
 	elapsedTime  = 0.0f;
 	nb_operation = (float) (1e-9*N*N*8.0f);
 
-	FILE *fid = fopen("MatrixMul_MKL_sp.txt", "w+");
+	FILE *fid = fopen("CovMatEst_MKL_sp.txt", "w+");
 	if(fid == NULL) {
 		fprintf(stderr, "Error at %s:%d : %s\n", __FILE__, __LINE__, strerror(errno));
 		return;
@@ -175,7 +175,7 @@ void readData(MKL_Complex8 *signal, size_t size_sig, MKL_Complex8 *reference, si
     // a mettre a jour .....
 
     char path[150];
-    char *home = "/home/jfd/projets/scientific_benchmarks/data/CovMatEstimation/";
+    char *home = "../data/CovMatEstimation/";
 
 	strcpy(path, home);
 	strcat(path, "CME_Complex_out_100.bin");
