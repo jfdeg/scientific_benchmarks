@@ -6,7 +6,7 @@ project(scientific_benchmark)
 
 # find_package(CUDA)
 
-# set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 
 # if (CUDA_FOUND)
 # 	#set(CUDA_HOST_COMPILER /usr/bin/gcc-6)
@@ -37,5 +37,5 @@ project(scientific_benchmark)
 include_directories("/usr/include/mkl")
 SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
 
-add_executable(autoBenchEstimation_MKL_sp src/MKL/autoBenchEstimation_MKL_sp.c src/MKL/mklEstimation_Complex_sp.c src/main.c)
+add_executable(autoBenchEstimation_MKL_sp src/MKL/autoBenchEstimation_MKL_sp.c src/MKL/mklEstimation_Complex_sp.c src/MKL/utils_sp.c src/main.c)
 target_link_libraries(autoBenchEstimation_MKL_sp -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lm -lrt -lpthread -ldl)
