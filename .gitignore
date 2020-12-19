@@ -30,6 +30,7 @@
 *.x
 
 # cmake
+bin
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
